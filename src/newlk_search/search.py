@@ -375,7 +375,7 @@ class SearchResult(object):
     def download(
         self, 
         quality_bitmask:str = "default", 
-        idx: list(int) = None, 
+        download_idx: list(int) = None, 
         download_dir: str = None, 
         cutout_size: Union[int, tuple] = None, 
         download_all: bool = False,
@@ -444,21 +444,22 @@ class SearchResult(object):
 
         else:
         	if download_idx == None:
-            	warnings.warn(
-                	"Warning: {} files available to download. "
-                	"Only the first file has been downloaded. "
-                	"Please use idx keyword to specify indices or 
-                	"spcify additional criteria (e.g. quarter, campaign"
-                	", or sector) to limit your search.".format(len(self.table)),
-                	LightkurveWarning,
-            	)
+        		if len(self.table) > 0:
+            		warnings.warn(
+                		"Warning: {} files available to download. "
+                		"Only the first file has been downloaded. "
+                		"Please use idx keyword to specify indices or 
+                		"spcify additional criteria (e.g. quarter, campaign"
+                		", or sector) to limit your search.".format(len(self.table)),
+                		LightkurveWarning,
+            		)
             	return self._download_one(
-            	table=self.table[:1],
-            	quality_bitmask=quality_bitmask,
-            	download_dir=download_dir,
-            	cutout_size=cutout_size,
-            	**kwargs,
-        	)
+            		table=self.table[:1],
+            		quality_bitmask=quality_bitmask,
+            		download_dir=download_dir,
+            		cutout_size=cutout_size,
+            		**kwargs,
+        		)
         	elif len(download_idx) == 1:
         		return self._download_one(
             		table=self.table[download_idx[0]:download_idx[0]+1],
