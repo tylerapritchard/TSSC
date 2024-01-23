@@ -373,7 +373,13 @@ class SearchResult(object):
 
     @suppress_stdout
     def download(
-        self, quality_bitmask="default", download_dir=None, cutout_size=None, **kwargs
+        self, 
+        quality_bitmask:str = "default", 
+        idx: list(int) = None, 
+        download_dir: str = None, 
+        cutout_size: Union[int, tuple] = None, 
+        #product_type: string = None  in case you want to download all CDIPs for example
+        **kwargs
     ):
         """Download and open the first data product in the search result.
 
@@ -393,8 +399,9 @@ class SearchResult(object):
                   This is known to remove good data.
                 * "hardest": removes all data that has been flagged
                   This mask is not recommended.
-
             See the :class:`KeplerQualityFlags <lightkurve.utils.KeplerQualityFlags>` or :class:`TessQualityFlags <lightkurve.utils.TessQualityFlags>` class for details on the bitmasks.
+        download_idx: list of integers
+        	index values of the search result which you wish to download
         download_dir : str, optional
             Location where the data files will be stored.
             If `None` is passed, the value from `cache_dir` configuration parameter is used,
@@ -403,7 +410,7 @@ class SearchResult(object):
             See `~lightkurve.config.get_cache_dir()` for details.
         cutout_size : int, float or tuple, optional
             Side length of cutout in pixels. Tuples should have dimensions (y, x).
-            Default size is (5, 5)
+            Default size is (5, 5). If a single integer, will create a square of given dimension
         flux_column : str, optional
             The column in the FITS file to be read as `flux`. Defaults to 'pdcsap_flux'.
             Typically 'pdcsap_flux' or 'sap_flux'.
@@ -423,104 +430,63 @@ class SearchResult(object):
             If any other error occurs.
 
         """
+		if isinstance(download_idx, int):
+        	download_idx = [download_idx]
+        		
         if len(self.table) == 0:
             warnings.warn(
                 "Cannot download from an empty search result.", LightkurveWarning
             )
             return None
-        if len(self.table) != 1:
-            warnings.warn(
-                "Warning: {} files available to download. "
-                "Only the first file has been downloaded. "
-                "Please use `download_all()` or specify additional "
-                "criteria (e.g. quarter, campaign, or sector) "
-                "to limit your search.".format(len(self.table)),
-                LightkurveWarning,
-            )
 
-        return self._download_one(
-            table=self.table[:1],
-            quality_bitmask=quality_bitmask,
-            download_dir=download_dir,
-            cutout_size=cutout_size,
-            **kwargs,
-        )
-
-    @suppress_stdout
-    def download_all(
-        self, quality_bitmask="default", download_dir=None, cutout_size=None, **kwargs
-    ):
-        """Download and open all data products in the search result.
-
-        This method will return a `~lightkurve.TargetPixelFileCollection` or
-        `~lightkurve.LightCurveCollection`.
-
-        Parameters
-        ----------
-        quality_bitmask : str or int, optional
-            Bitmask (integer) which identifies the quality flag bitmask that should
-            be used to mask out bad cadences. If a string is passed, it has the
-            following meaning:
-
-                * "none": no cadences will be ignored
-                * "default": cadences with severe quality issues will be ignored
-                * "hard": more conservative choice of flags to ignore
-                  This is known to remove good data.
-                * "hardest": removes all data that has been flagged
-                  This mask is not recommended.
-
-            See the :class:`KeplerQualityFlags <lightkurve.utils.KeplerQualityFlags>` or :class:`TessQualityFlags <lightkurve.utils.TessQualityFlags>` class for details on the bitmasks.
-        download_dir : str, optional
-            Location where the data files will be stored.
-            If `None` is passed, the value from `cache_dir` configuration parameter is used,
-            with "~/.lightkurve/cache" as the default.
-
-            See `~lightkurve.config.get_cache_dir()` for details.
-        cutout_size : int, float or tuple, optional
-            Side length of cutout in pixels. Tuples should have dimensions (y, x).
-            Default size is (5, 5)
-        flux_column : str, optional
-            The column in the FITS file to be read as `flux`. Defaults to 'pdcsap_flux'.
-            Typically 'pdcsap_flux' or 'sap_flux'.
-        kwargs : dict, optional
-            Extra keyword arguments passed on to the file format reader function.
-
-        Returns
-        -------
-        collection : `~lightkurve.collections.Collection` object
-            Returns a `~lightkurve.LightCurveCollection` or
-            `~lightkurve.TargetPixelFileCollection`,
-            containing all entries in the products table
-
-        Raises
-        ------
-        HTTPError
-            If the TESSCut service times out (i.e. returns HTTP status 504).
-        SearchError
-            If any other error occurs.
-        """
-        if len(self.table) == 0:
-            warnings.warn(
-                "Cannot download from an empty search result.", LightkurveWarning
-            )
-            return None
-        log.debug("{} files will be downloaded.".format(len(self.table)))
-
-        products = []
-        for idx in range(len(self.table)):
-            products.append(
-                self._download_one(
-                    table=self.table[idx : idx + 1],
-                    quality_bitmask=quality_bitmask,
-                    download_dir=download_dir,
-                    cutout_size=cutout_size,
-                    **kwargs,
-                )
-            )
-        if isinstance(products[0], TargetPixelFile):
-            return TargetPixelFileCollection(products)
         else:
-            return LightCurveCollection(products)
+        	if download_idx == None:
+            	warnings.warn(
+                	"Warning: {} files available to download. "
+                	"Only the first file has been downloaded. "
+                	"Please use idx keyword to specify indices or 
+                	"spcify additional criteria (e.g. quarter, campaign"
+                	", or sector) to limit your search.".format(len(self.table)),
+                	LightkurveWarning,
+            	)
+            	return self._download_one(
+            	table=self.table[:1],
+            	quality_bitmask=quality_bitmask,
+            	download_dir=download_dir,
+            	cutout_size=cutout_size,
+            	**kwargs,
+        	)
+        	elif len(download_idx) == 1:
+        		return self._download_one(
+            		table=self.table[download_idx[0]:download_idx[0]+1],
+            		quality_bitmask=quality_bitmask,
+            		download_dir=download_dir,
+            		cutout_size=cutout_size,
+            		**kwargs,
+        		)
+        		
+        	else:
+
+        	
+            	log.debug("{} files will be downloaded.".format(len(download_idx)))
+
+        		products = []
+        		for idx in download_idx:
+            		products.append(
+                		self._download_one(
+                    		table=self.table[idx : idx + 1],
+                    		quality_bitmask=quality_bitmask,
+                    		download_dir=download_dir,
+                    		cutout_size=cutout_size,
+                    		**kwargs,
+                		)
+            		)
+        		if isinstance(products[0], TargetPixelFile):
+            		return TargetPixelFileCollection(products)
+        		else:
+            		return LightCurveCollection(products)
+
+
 
     def _default_download_dir(self):
         return config.get_cache_dir()
