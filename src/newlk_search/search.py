@@ -469,7 +469,7 @@ class SearchResult(object):
         		)
         		
         	else:
-        		if download_all = True:
+        		if download_all == True:
         			dowload_idx = np.arange(len(self.table))
             	log.debug("{} files will be downloaded.".format(len(download_idx)))
 
