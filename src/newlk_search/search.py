@@ -378,6 +378,7 @@ class SearchResult(object):
         idx: list(int) = None, 
         download_dir: str = None, 
         cutout_size: Union[int, tuple] = None, 
+        download_all: bool = False,
         #product_type: string = None  in case you want to download all CDIPs for example
         **kwargs
     ):
@@ -414,6 +415,8 @@ class SearchResult(object):
         flux_column : str, optional
             The column in the FITS file to be read as `flux`. Defaults to 'pdcsap_flux'.
             Typically 'pdcsap_flux' or 'sap_flux'.
+        download_all : bool
+        	If true, download all data products in the search_result table
         kwargs : dict, optional
             Extra keyword arguments passed on to the file format reader function.
 
@@ -466,8 +469,8 @@ class SearchResult(object):
         		)
         		
         	else:
-
-        	
+        		if download_all = True:
+        			dowload_idx = np.arange(len(self.table))
             	log.debug("{} files will be downloaded.".format(len(download_idx)))
 
         		products = []
