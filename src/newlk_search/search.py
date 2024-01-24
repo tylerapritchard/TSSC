@@ -283,7 +283,7 @@ class SearchResult(object):
         return self.table["distance"].quantity
 
     def _download_one(
-        self, table, quality_bitmask, download_dir, cutout_size, **kwargs
+        self, table, quality_bitmask, download_dir, cutout_size, enable_cloud, **kwargs
     ):
         """Private method used by `download()` and `download_all()` to download
         exactly one file from the MAST archive.
@@ -356,6 +356,8 @@ class SearchResult(object):
                 log.debug("File found in local cache.")
             else:
                 from astroquery.mast import Observations
+                if enable_cloud:
+                    Observations.enable_cloud_dataset()
 
                 download_url = table[:1]["dataURI"][0]
                 log.debug("Started downloading {}.".format(download_url))
@@ -375,11 +377,12 @@ class SearchResult(object):
     def download(
         self, 
         quality_bitmask:str = "default", 
-        download_idx: list(int) = None, 
+        download_idx: Union[int, List(int)] = None, 
         download_dir: str = None, 
         cutout_size: Union[int, tuple] = None, 
         download_all: bool = False,
-        cache: bool = True,
+        cache: bool = None,
+        enable_cloud: bool = True,
         #product_type: string = None  in case you want to download all CDIPs for example
         **kwargs
     ):
@@ -419,7 +422,7 @@ class SearchResult(object):
         download_all : bool
         	If true, download all data products in the search_result table
         cache: bool, optional
-            If True, downloads file to the lightkurve cache on disk.  If False, opens file in memmory.
+            If True, downloads file to the lightkurve cache on disk.  If False, opens file in memory.
         kwargs : dict, optional
             Extra keyword arguments passed on to the file format reader function.
 
@@ -438,6 +441,13 @@ class SearchResult(object):
         """
         if isinstance(download_idx, int):
         	download_idx = [download_idx]
+        # This flag is set by eg TIKE. If using a remote platform, we don't want to cache our data by default
+        # If running locally, use the cache as usual. 
+        if os.environ.get('LK_JUPYTERHUB_EXTERNAL_URL') is not None:
+            cache = False
+        else:
+            cache=True
+        
         		
         if len(self.table) == 0:
             warnings.warn(
@@ -461,7 +471,8 @@ class SearchResult(object):
             		quality_bitmask=quality_bitmask,
             		download_dir=download_dir,
             		cutout_size=cutout_size,
-                    cache=cache
+                    cache=cache,
+                    enable_cloud=enable_cloud,
             		**kwargs,
         		)
         	elif len(download_idx) == 1:
@@ -471,6 +482,7 @@ class SearchResult(object):
             		download_dir=download_dir,
             		cutout_size=cutout_size,
                     cache=cache,
+                    enable_cloud=enable_cloud,
             		**kwargs,
         		)
         		
@@ -488,6 +500,7 @@ class SearchResult(object):
                     		download_dir=download_dir,
                     		cutout_size=cutout_size,
                             cache=cache,
+                            enable_cloud=enable_cloud,
                     		**kwargs,
                 		)
             		)
@@ -584,17 +597,18 @@ class SearchResult(object):
 
 @cached
 def search_targetpixelfile(
-    target,
-    radius=None,
-    exptime=None,
-    cadence=None,
-    mission=("Kepler", "K2", "TESS"),
-    author=None,
-    quarter=None,
-    month=None,
-    campaign=None,
-    sector=None,
-    limit=None,
+    target:  Union[str, int, SkyCoord],
+    radius:  Union[float, u.Quantity] = None,
+    exptime:  Union[str, int, tuple] = None,
+    cadence: Union[str, int, tuple] = None,
+    mission: Union[str, tuple] = ("Kepler", "K2", "TESS"),
+    author:  Union[str, tuple] = None,
+    quarter:  Union[int, list[int]] = None,
+    month:    Union[int, list[int]] = None,
+    campaign: Union[int, list[int]] = None,
+    sector:   Union[int, list[int]] = None,
+    limit:    int = None,
+    enable_cloud: bool = True
 ):
     """Search the `MAST data archive <https://archive.stsci.edu>`_ for target pixel files.
 
@@ -642,6 +656,9 @@ def search_targetpixelfile(
         By default all months will be returned.
     limit : int
         Maximum number of products to return.
+    enable_cloud : bool, optional
+        If enable_cloud = True, astroquery.mast.observations will enable cloud datasets
+
 
     Returns
     -------
@@ -698,6 +715,7 @@ def search_targetpixelfile(
             campaign=campaign,
             sector=sector,
             limit=limit,
+            enable_cloud=enable_cloud,
         )
     except SearchError as exc:
         log.error(exc)
@@ -713,17 +731,18 @@ def search_lightcurvefile(*args, **kwargs):
 
 @cached
 def search_lightcurve(
-    target,
-    radius=None,
-    exptime=None,
-    cadence=None,
-    mission=("Kepler", "K2", "TESS"),
-    author=None,
-    quarter=None,
-    month=None,
-    campaign=None,
-    sector=None,
-    limit=None,
+    target:  Union[str, int, SkyCoord],
+    radius:  Union[float, u.Quantity] = None,
+    exptime:  Union[str, int, tuple] = None,
+    cadence: Union[str, int, tuple] = None,
+    mission: Union[str, tuple] = ("Kepler", "K2", "TESS"),
+    author:  Union[str, tuple] = None,
+    quarter:  Union[int, list[int]] = None,
+    month:    Union[int, list[int]] = None,
+    campaign: Union[int, list[int]] = None,
+    sector:   Union[int, list[int]] = None,
+    limit:    int = None,
+    enable_cloud: bool = True
 ):
     """Search the `MAST data archive <https://archive.stsci.edu>`_ for light curves.
 
@@ -772,6 +791,9 @@ def search_lightcurve(
         By default all months will be returned.
     limit : int
         Maximum number of products to return.
+    enable_cloud : bool, optional
+        If enable_cloud = True, astroquery.mast.observations will enable cloud datasets
+
 
     Returns
     -------
@@ -837,6 +859,7 @@ def search_lightcurve(
             campaign=campaign,
             sector=sector,
             limit=limit,
+            enable_cloud=enable_cloud,
         )
     except SearchError as exc:
         log.error(exc)
@@ -844,7 +867,9 @@ def search_lightcurve(
 
 
 @cached
-def search_tesscut(target, sector=None):
+def search_tesscut(target, sector : bool = None, 
+                   enable_cloud : bool = True, 
+                   ) -> SearchResult:
     """Search the `MAST TESSCut service <https://mast.stsci.edu/tesscut/>`_ for a region
     of sky that is available as a TESS Full Frame Image cutout.
 
@@ -863,9 +888,11 @@ def search_tesscut(target, sector=None):
             * A coordinate string in decimal format, e.g. "285.67942179 +50.24130576".
             * A coordinate string in sexagesimal format, e.g. "19:02:43.1 +50:14:28.7".
             * An `astropy.coordinates.SkyCoord` object.
-    sector : int or list
+    sector : int or list , optional
         TESS Sector number. Default (None) will return all available sectors. A
         list of desired sectors can also be provided.
+    enable_cloud : bool , optional
+        If enable_cloud = True, astroquery.mast.observations will enable cloud datasets
 
     Returns
     -------
@@ -873,26 +900,27 @@ def search_tesscut(target, sector=None):
         Object detailing the data products found.
     """
     try:
-        return _search_products(target, filetype="ffi", mission="TESS", sector=sector)
+        return _search_products(target, filetype="ffi", mission="TESS", sector=sector, enable_cloud = enable_cloud)
     except SearchError as exc:
         log.error(exc)
         return SearchResult(None)
 
 
 def _search_products(
-    target,
-    radius=None,
-    filetype="Lightcurve",
-    mission=("Kepler", "K2", "TESS"),
-    provenance_name=None,
-    exptime=(0, 9999),
-    quarter=None,
-    month=None,
-    campaign=None,
-    sector=None,
-    limit=None,
+    target: Union[str, SkyCoord],
+    radius: Union[int, float, u.Quantity] = None,
+    filetype: str = "Lightcurve",
+    mission: Union[str, List(str)] = ("Kepler", "K2", "TESS"),
+    provenance_name: Union[str, List(str)] = None,
+    exptime: Union[int, float, tuple] = (0, 9999),
+    quarter: Union[int, List(int)] = None,
+    month: Union[int, List(int)] = None,
+    campaign: Union[int, List(int)] = None,
+    sector: Union[int, List(int)] = None,
+    limit: int = None,
+    enable_cloud: bool = True,
     **extra_query_criteria,
-):
+) :-> SearchResult
     """Helper function which returns a SearchResult object containing MAST
     products that match several criteria.
 
@@ -928,6 +956,9 @@ def _search_products(
         By default all months will be returned.
     limit : int
         Maximum number of products to return
+    enable_clout : bool
+        If True, search for products on the cloud (AWS). If products are not available, search MAST.
+        False searches the servers at MAST only.
 
     Returns
     -------
