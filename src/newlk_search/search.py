@@ -379,6 +379,7 @@ class SearchResult(object):
         download_dir: str = None, 
         cutout_size: Union[int, tuple] = None, 
         download_all: bool = False,
+        cache: bool = True,
         #product_type: string = None  in case you want to download all CDIPs for example
         **kwargs
     ):
@@ -417,6 +418,8 @@ class SearchResult(object):
             Typically 'pdcsap_flux' or 'sap_flux'.
         download_all : bool
         	If true, download all data products in the search_result table
+        cache: bool, optional
+            If True, downloads file to the lightkurve cache on disk.  If False, opens file in memmory.
         kwargs : dict, optional
             Extra keyword arguments passed on to the file format reader function.
 
@@ -433,7 +436,7 @@ class SearchResult(object):
             If any other error occurs.
 
         """
-		if isinstance(download_idx, int):
+        if isinstance(download_idx, int):
         	download_idx = [download_idx]
         		
         if len(self.table) == 0:
@@ -445,7 +448,7 @@ class SearchResult(object):
         else:
         	if download_idx == None:
         		if len(self.table) > 0:
-            		warnings.warn(
+                    warnings.warn(
                 		"Warning: {} files available to download. "
                 		"Only the first file has been downloaded. "
                 		"Please use idx keyword to specify indices or 
@@ -453,11 +456,12 @@ class SearchResult(object):
                 		", or sector) to limit your search.".format(len(self.table)),
                 		LightkurveWarning,
             		)
-            	return self._download_one(
+                return self._download_one(
             		table=self.table[:1],
             		quality_bitmask=quality_bitmask,
             		download_dir=download_dir,
             		cutout_size=cutout_size,
+                    cache=cache
             		**kwargs,
         		)
         	elif len(download_idx) == 1:
@@ -466,31 +470,41 @@ class SearchResult(object):
             		quality_bitmask=quality_bitmask,
             		download_dir=download_dir,
             		cutout_size=cutout_size,
+                    cache=cache,
             		**kwargs,
         		)
         		
         	else:
-        		if download_all == True:
+                if download_all == True:
         			dowload_idx = np.arange(len(self.table))
             	log.debug("{} files will be downloaded.".format(len(download_idx)))
 
-        		products = []
-        		for idx in download_idx:
+                products = []
+                for idx in download_idx:
             		products.append(
                 		self._download_one(
                     		table=self.table[idx : idx + 1],
                     		quality_bitmask=quality_bitmask,
                     		download_dir=download_dir,
                     		cutout_size=cutout_size,
+                            cache=cache,
                     		**kwargs,
                 		)
             		)
-        		if isinstance(products[0], TargetPixelFile):
-            		return TargetPixelFileCollection(products)
-        		else:
+                if isinstance(products[0], TargetPixelFile):
+                    return TargetPixelFileCollection(products)
+                else:
             		return LightCurveCollection(products)
 
+	@deprecated("2.4", alternative="download()", warning_type=LightkurveDeprecationWarning)
+    def download_all(self, quality_bitmask="default", download_dir=None, cutout_size=None, **kwargs)
+        """DEPRECATED. Please use `lk.read()` instead.
 
+    	This function has been deprecated because its name collides with Python's
+    	built-in `open()` function.
+    	"""
+    	# Not sure I am setting this right
+        return download(self, download_all=True)
 
     def _default_download_dir(self):
         return config.get_cache_dir()
