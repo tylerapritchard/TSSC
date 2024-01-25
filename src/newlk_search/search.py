@@ -283,7 +283,7 @@ class SearchResult(object):
         return self.table["distance"].quantity
 
     def _download_one(
-        self, table, quality_bitmask, download_dir, cutout_size, enable_cloud, **kwargs
+        self, table, quality_bitmask, download_dir, cutout_size, enable_cloud, cache, **kwargs
     ):
         """Private method used by `download()` and `download_all()` to download
         exactly one file from the MAST archive.
@@ -308,6 +308,8 @@ class SearchResult(object):
                     table[0]["sequence_number"],
                     download_dir,
                     cutout_size,
+                    enable_cloud,
+                    cache,
                 )
             except Exception as exc:
                 msg = str(exc)
@@ -355,23 +357,32 @@ class SearchResult(object):
             if os.path.exists(path):
                 log.debug("File found in local cache.")
             else:
-                from astroquery.mast import Observations
-                if enable_cloud:
-                    Observations.enable_cloud_dataset()
+                if cache:
+                    # if we are caching files, download them to the lightkurve cache
+                    # are we sure that we want a lightkurve cache?  this could be 
+                    # minimized if we share the astropy cache
+                    from astroquery.mast import Observations
+                    if enable_cloud:
+                        Observations.enable_cloud_dataset()
 
-                download_url = table[:1]["dataURI"][0]
-                log.debug("Started downloading {}.".format(download_url))
-                download_response = Observations.download_products(
-                    table[:1], mrp_only=False, download_dir=download_dir
-                )[0]
-                if download_response["Status"] != "COMPLETE":
-                    raise LightkurveError(
-                        f"Download of {download_url} failed. "
-                        f"MAST returns {download_response['Status']}: {download_response['Message']}"
-                    )
-                path = download_response["Local Path"]
-                log.debug("Finished downloading.")
-            return read(path, quality_bitmask=quality_bitmask, **kwargs)
+                    download_url = table[:1]["dataURI"][0]
+                    log.debug("Started downloading {}.".format(download_url))
+                    download_response = Observations.download_products(
+                        table[:1], mrp_only=False, download_dir=download_dir
+                    )[0]
+                    if download_response["Status"] != "COMPLETE":
+                        raise LightkurveError(
+                            f"Download of {download_url} failed. "
+                            f"MAST returns {download_response['Status']}: {download_response['Message']}"
+                        )
+                    path = download_response["Local Path"]
+                    log.debug("Finished downloading.")
+                else:
+                    # read will need to be updated to make sure that this works
+                    # read will need to know if we are caching, and we will need to 
+                    # make sure that astropy.io.fits is reading this in without caching
+                    path = table["dataURI"]
+            return read(path, quality_bitmask=quality_bitmask,cache = cache,  **kwargs)
 
     @suppress_stdout
     def download(
@@ -441,12 +452,14 @@ class SearchResult(object):
         """
         if isinstance(download_idx, int):
         	download_idx = [download_idx]
+
         # This flag is set by eg TIKE. If using a remote platform, we don't want to cache our data by default
-        # If running locally, use the cache as usual. 
-        if os.environ.get('LK_JUPYTERHUB_EXTERNAL_URL') is not None:
-            cache = False
-        else:
-            cache=True
+        # If running locally, use the cache as usual. User specified cache overides this. 
+        if cache is None:
+            if os.environ.get('LK_JUPYTERHUB_EXTERNAL_URL') is not None:
+                cache = False
+            else:
+                cache=True
         
         		
         if len(self.table) == 0:
@@ -522,7 +535,7 @@ class SearchResult(object):
     def _default_download_dir(self):
         return config.get_cache_dir()
 
-    def _fetch_tesscut_path(self, target, sector, download_dir, cutout_size):
+    def _fetch_tesscut_path(self, target, sector, download_dir, cutout_size, enable_cloud, cache):
         """Downloads TESS FFI cutout and returns path to local file.
 
         Parameters
@@ -546,6 +559,9 @@ class SearchResult(object):
         # Set cutout_size defaults
         if cutout_size is None:
             cutout_size = 5
+        
+        if enable_cloud:
+            TesscutClass.enable_cloud_dataset()
 
         # Check existence of `~/.lightkurve-cache/tesscut`
         tesscut_dir = os.path.join(download_dir, "tesscut")
