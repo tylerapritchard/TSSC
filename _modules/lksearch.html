@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>lksearch &#8212; lksearch 0.1.dev documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=12dfc556" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=fd3f3429" />
+    <script src="../_static/documentation_options.js?v=781dc9bd"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for lksearch</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">config</span> <span class="k">as</span> <span class="n">_config</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="n">PACKAGEDIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+<span class="n">PREFER_CLOUD</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># Do you prefer URIs pointing to the Amazon bucket when available?</span>
+<span class="n">DOWNLOAD_CLOUD</span> <span class="o">=</span> <span class="kc">True</span>
+
+<span class="kn">from</span> <span class="nn">.version</span> <span class="kn">import</span> <span class="n">__version__</span>
+
+
+<div class="viewcode-block" id="Conf">
+<a class="viewcode-back" href="../apidoc.html#lksearch.Conf">[docs]</a>
+<span class="k">class</span> <span class="nc">Conf</span><span class="p">(</span><span class="n">_config</span><span class="o">.</span><span class="n">ConfigNamespace</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Configuration parameters for `search`.</span>
+
+<span class="sd">    Refer to `astropy.config.ConfigNamespace` for API details.</span>
+
+<span class="sd">    Refer to `Astropy documentation &lt;https://docs.astropy.org/en/stable/config/index.html#accessing-values&gt;`_</span>
+<span class="sd">    for usage.</span>
+
+<span class="sd">    The attributes listed below are the available configuration parameters.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    search_result_display_extra_columns</span>
+<span class="sd">        List of extra columns to be included when displaying a SearchResult object.</span>
+
+<span class="sd">    cache_dir</span>
+<span class="sd">        Default cache directory for data files downloaded, etc. Defaults to ``~/.lksearch/cache`` if not specified.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Note: when using list or string_list datatype,</span>
+    <span class="c1"># the behavior of astropy&#39;s parsing of the config file value:</span>
+    <span class="c1"># - it does not accept python list literal</span>
+    <span class="c1"># - it accepts a comma-separated list of string</span>
+    <span class="c1">#   - for a single value, it needs to be ended with a comma</span>
+    <span class="c1"># see: https://configobj.readthedocs.io/en/latest/configobj.html#the-config-file-format</span>
+    <span class="n">search_result_display_extra_columns</span> <span class="o">=</span> <span class="n">_config</span><span class="o">.</span><span class="n">ConfigItem</span><span class="p">(</span>
+        <span class="p">[],</span>
+        <span class="s2">&quot;List of extra columns to be included when displaying a SearchResult object.&quot;</span><span class="p">,</span>
+        <span class="n">cfgtype</span><span class="o">=</span><span class="s2">&quot;string_list&quot;</span><span class="p">,</span>
+        <span class="n">module</span><span class="o">=</span><span class="s2">&quot;lksearch.search&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">cache_dir</span> <span class="o">=</span> <span class="n">_config</span><span class="o">.</span><span class="n">ConfigItem</span><span class="p">(</span>
+        <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">&quot;Default cache directory for data files downloaded, etc.&quot;</span><span class="p">,</span>
+        <span class="n">cfgtype</span><span class="o">=</span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
+        <span class="n">module</span><span class="o">=</span><span class="s2">&quot;lksearch.config&quot;</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="n">conf</span> <span class="o">=</span> <span class="n">Conf</span><span class="p">()</span>
+
+<span class="kn">from</span> <span class="nn">.MASTSearch</span> <span class="kn">import</span> <span class="n">MASTSearch</span>
+<span class="kn">from</span> <span class="nn">.TESSSearch</span> <span class="kn">import</span> <span class="n">TESSSearch</span>
+<span class="kn">from</span> <span class="nn">.KeplerSearch</span> <span class="kn">import</span> <span class="n">KeplerSearch</span>
+<span class="kn">from</span> <span class="nn">.K2Search</span> <span class="kn">import</span> <span class="n">K2Search</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../Quickstart.html">Quickstart and Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/Example_searches.html">lksearch tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apidoc.html">API documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../GetInvolved.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../HowtoCite.html">Citing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Contact.html">Contact</a></li>
+</ul>
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024, TESS Science Support Center.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.3.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

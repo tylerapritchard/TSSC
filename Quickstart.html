@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Quickstart and Installation &#8212; lksearch 0.1.dev documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=fd3f3429" />
+    <script src="_static/documentation_options.js?v=781dc9bd"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="lksearch tutorial" href="tutorials/Example_searches.html" />
+    <link rel="prev" title="lksearch" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="quickstart-and-installation">
+<h1>Quickstart and Installation<a class="headerlink" href="#quickstart-and-installation" title="Link to this heading">¶</a></h1>
+<p><em>This package is not currently available on PyPI, but is intended to be pip-installable when made available to users currently we suggest you clone the github and install with poetry</em></p>
+<p>The easiest way to install <em>lksearch</em> and all of its dependencies is to use the <code class="docutils literal notranslate"><span class="pre">pip</span></code> command,
+which is a standard part of all Python distributions. (upon release)</p>
+<p>To install <em>lksearch</em>, run the following command in a terminal window:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>lksearch<span class="w"> </span>--upgrade
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">--upgrade</span></code> flag is optional, but recommended if you already
+have <em>lksearch</em> installed and want to upgrade to the latest version.</p>
+<p>Depending on the specific Python environment, you may need to replace <code class="docutils literal notranslate"><span class="pre">python</span></code>
+with the correct Python interpreter, e.g., <code class="docutils literal notranslate"><span class="pre">python3</span></code>.</p>
+<section id="search-package-for-finding-and-retrieving-tess-kepler-k2-mission-data">
+<h2>Search package for finding and retrieving TESS/Kepler/K2 mission data<a class="headerlink" href="#search-package-for-finding-and-retrieving-tess-kepler-k2-mission-data" title="Link to this heading">¶</a></h2>
+<p>This package is a stand-alone implementation of the lightkurve search functionalty.
+While this package shares many common features to the lightkurve.search module, it has many major changes, as described below.</p>
+<section id="changes-include">
+<h3>Changes Include:<a class="headerlink" href="#changes-include" title="Link to this heading">¶</a></h3>
+<blockquote>
+<div><ul class="simple">
+<li><p>The class structure has been modified. The base class is MASTSearch. Users are intended to use mission-specific classes (KeplerSearch/K2Search/TESSSearch) to obtain mission-specific results.</p></li>
+<li><p>Result tables are saved as pandas dataframs</p></li>
+<li><p>The TESScut search functionality now uses tesswcs to identify observed sectors</p></li>
+<li><p>Data products are now generalized (timeseries contains lightcurve products, cubedata contains target pixel files and TESSCut, and dvreports contains pdfs contining data validation reports)</p></li>
+<li><p>‘download’ now defaults to the AWS cloud storage.</p></li>
+<li><p>‘download’ only downloads files to disk. It no longer returns a lightkurve object.</p></li>
+</ul>
+</div></blockquote>
+</section>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">lksearch</span> <span class="kn">import</span> <span class="n">MASTSearch</span><span class="p">,</span> <span class="n">TESSSearch</span><span class="p">,</span> <span class="n">KeplerSearch</span><span class="p">,</span> <span class="n">K2Search</span>
+<span class="c1">### Get long-cadence target pixel files for Kepler</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">search</span><span class="o">.</span><span class="n">KeplerSearch</span><span class="p">(</span><span class="s2">&quot;KIC 11904151&quot;</span><span class="p">,</span> <span class="n">exptime</span><span class="o">=</span><span class="s2">&quot;long&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">cubedata</span>
+<span class="c1">### Get TESScut cutouts for a particular target and sector</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">TESSSearch</span><span class="p">(</span><span class="s2">&quot;TOI 2257&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">tesscut</span>
+<span class="n">res</span><span class="o">.</span><span class="n">download</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="index.html">Table of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Quickstart and Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#search-package-for-finding-and-retrieving-tess-kepler-k2-mission-data">Search package for finding and retrieving TESS/Kepler/K2 mission data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#changes-include">Changes Include:</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/Example_searches.html">lksearch tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apidoc.html">API documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="GetInvolved.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HowtoCite.html">Citing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Contact.html">Contact</a></li>
+</ul>
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024, TESS Science Support Center.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.3.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="_sources/Quickstart.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
